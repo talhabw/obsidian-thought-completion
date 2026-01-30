@@ -1,0 +1,36 @@
+{
+  "name": "thought-completion",
+  "version": "0.1.0",
+  "description": "A thinking companion for Obsidian - suggests what to think about next",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "ai",
+    "writing",
+    "thinking"
+  ],
+  "author": "tbw",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tbw/thought-completion.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tbw/thought-completion/issues"
+  },
+  "homepage": "https://github.com/tbw/thought-completion#readme",
+  "devDependencies": {
+    "@codemirror/state": "^6.4.0",
+    "@codemirror/view": "^6.24.0",
+    "@types/node": "^20.11.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.20.0",
+    "obsidian": "^1.5.0",
+    "typescript": "^5.3.0"
+  }
+}

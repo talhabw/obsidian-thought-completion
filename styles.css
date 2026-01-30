@@ -1,0 +1,48 @@
+/* Thought Completion - Ghost Text Styling */
+
+.thought-completion-ghost {
+  opacity: 0.5;
+  font-style: italic;
+  color: var(--text-muted);
+  pointer-events: none;
+  user-select: none;
+  white-space: pre-wrap;
+}
+
+/* Darker themes might need slightly higher opacity */
+.theme-dark .thought-completion-ghost {
+  opacity: 0.55;
+}
+
+/* Ensure ghost text doesn't affect line height */
+.thought-completion-ghost::before,
+.thought-completion-ghost::after {
+  content: none;
+}
+
+/* Status bar styling */
+.status-bar-item.tc-idle {
+  color: var(--text-muted);
+}
+
+.status-bar-item.tc-queued {
+  color: var(--text-warning);
+}
+
+.status-bar-item.tc-predicting {
+  color: var(--text-accent);
+  animation: tc-pulse 1s ease-in-out infinite;
+}
+
+.status-bar-item.tc-suggesting {
+  color: var(--text-success);
+}
+
+.status-bar-item.tc-disabled {
+  color: var(--text-faint);
+}
+
+@keyframes tc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

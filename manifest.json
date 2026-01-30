@@ -1,0 +1,10 @@
+{
+  "id": "thought-completion",
+  "name": "Thought Completion",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "A thinking companion that suggests what to think or write about next. Like IDE tab completion, but for thoughts.",
+  "author": "talhabw",
+  "authorUrl": "https://karasu.me",
+  "isDesktopOnly": false
+}
