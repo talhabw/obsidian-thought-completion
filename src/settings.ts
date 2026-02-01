@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type ThoughtCompletionPlugin from './main';
 import { SuggestionMode, SuggestionCase } from './types';
+import { DEFAULT_PROMPTS } from './ai/prompts';
 
 export class ThoughtCompletionSettingTab extends PluginSettingTab {
   plugin: ThoughtCompletionPlugin;
@@ -46,7 +47,7 @@ export class ThoughtCompletionSettingTab extends PluginSettingTab {
       .setDesc('Your API key (stored locally)')
       .addText(text => {
         text
-          .setPlaceholder('sk-...')
+          .setPlaceholder('Enter API key')
           .setValue(this.plugin.settings.apiKey)
           .onChange(async (value) => {
             this.plugin.settings.apiKey = value;
@@ -59,7 +60,7 @@ export class ThoughtCompletionSettingTab extends PluginSettingTab {
       .setName('Model')
       .setDesc('Model name to use (e.g., gpt-4o-mini, claude-3-haiku)')
       .addText(text => text
-        .setPlaceholder('gpt-4o-mini')
+        .setPlaceholder('Enter model name')
         .setValue(this.plugin.settings.model)
         .onChange(async (value) => {
           this.plugin.settings.model = value;
@@ -84,15 +85,59 @@ export class ThoughtCompletionSettingTab extends PluginSettingTab {
         .onChange(async (value) => {
           this.plugin.settings.mode = value as SuggestionMode;
           await this.plugin.saveSettings();
+          this.display(); // Refresh to show the prompt for the new mode
         }));
+
+    // Custom prompt for current mode
+    const currentMode = this.plugin.settings.mode;
+    const modeNames: Record<SuggestionMode, string> = {
+      auto: 'Auto',
+      questions: 'Questions',
+      structural: 'Structural',
+      critical: 'Critical',
+      connector: 'Connector',
+    };
+    const currentPrompt = this.plugin.settings.customPrompts[currentMode] ?? DEFAULT_PROMPTS[currentMode];
+    const isCustomized = this.plugin.settings.customPrompts[currentMode] !== undefined 
+      && this.plugin.settings.customPrompts[currentMode] !== '';
+
+    const promptSetting = new Setting(containerEl)
+      .setName(`System prompt (${modeNames[currentMode]})`)
+      .setDesc('Customize the AI system prompt for the current mode');
+
+    if (isCustomized) {
+      promptSetting.addButton(button => button
+        .setButtonText('Reset to default')
+        .onClick(async () => {
+          delete this.plugin.settings.customPrompts[currentMode];
+          await this.plugin.saveSettings();
+          this.display();
+        }));
+    }
+
+    promptSetting.addTextArea(textArea => {
+      textArea
+        .setPlaceholder('Enter custom system prompt.')
+        .setValue(currentPrompt)
+        .onChange(async (value) => {
+          if (value.trim() === '' || value === DEFAULT_PROMPTS[currentMode]) {
+            delete this.plugin.settings.customPrompts[currentMode];
+          } else {
+            this.plugin.settings.customPrompts[currentMode] = value;
+          }
+          await this.plugin.saveSettings();
+        });
+      textArea.inputEl.rows = 10;
+      textArea.inputEl.cols = 50;
+    });
 
     new Setting(containerEl)
       .setName('Letter case')
       .setDesc('Transform suggestion capitalization')
       .addDropdown(dropdown => dropdown
         .addOption('none', 'Keep as-is')
-        .addOption('lower', 'all lowercase')
-        .addOption('firstLower', 'first letter lowercase')
+        .addOption('lower', 'All lowercase')
+        .addOption('firstLower', 'First letter lowercase')
         .setValue(this.plugin.settings.suggestionCase)
         .onChange(async (value) => {
           this.plugin.settings.suggestionCase = value as SuggestionCase;
@@ -140,7 +185,7 @@ export class ThoughtCompletionSettingTab extends PluginSettingTab {
 
       new Setting(containerEl)
         .setName('Trigger on newline')
-        .setDesc('Suggest after pressing Enter')
+        .setDesc('Suggest after pressing enter')
         .addToggle(toggle => toggle
           .setValue(this.plugin.settings.triggerOnNewline)
           .onChange(async (value) => {

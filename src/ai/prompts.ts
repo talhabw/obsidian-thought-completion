@@ -1,9 +1,9 @@
-import { SuggestionMode } from '../types';
+import { SuggestionMode, CustomPrompts } from '../types';
 
 /**
- * System prompts for each suggestion mode
+ * Default system prompts for each suggestion mode
  */
-export const SYSTEM_PROMPTS: Record<SuggestionMode, string> = {
+export const DEFAULT_PROMPTS: Record<SuggestionMode, string> = {
   auto: `You are a "Thought Completion" engine for a writer. Your goal is NOT to write the content, but to suggest the cognitive direction the writer should take next.
 
 Read the user's current text context. Determine the most helpful immediate next step (a question to answer, a counter-argument to consider, or a structural element to add).
@@ -17,7 +17,7 @@ Examples:
 - Context: "The problem with modern web design is..."
   Suggestion: "List the three main usability issues."
 - Context: "We need to focus on user retention."
-  Suggestion: "Ask: Why are users leaving currently?"
+  Suggestion: "Why are users leaving currently?"
 - Context: "This algorithm is efficient."
   Suggestion: "Contrast this with the brute-force approach."
 Return ONLY the suggestion text.`,
@@ -119,8 +119,12 @@ export function buildUserPrompt(
 }
 
 /**
- * Get the system prompt for a given mode
+ * Get the system prompt for a given mode, with optional custom override
  */
-export function getSystemPrompt(mode: SuggestionMode): string {
-  return SYSTEM_PROMPTS[mode];
+export function getSystemPrompt(mode: SuggestionMode, customPrompts?: CustomPrompts): string {
+  const customPrompt = customPrompts?.[mode];
+  if (customPrompt && customPrompt.trim()) {
+    return customPrompt;
+  }
+  return DEFAULT_PROMPTS[mode];
 }

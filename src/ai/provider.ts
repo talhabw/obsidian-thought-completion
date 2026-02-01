@@ -1,3 +1,4 @@
+import { requestUrl } from 'obsidian';
 import { CompletionContext, ThoughtCompletionSettings, SuggestionCase } from '../types';
 import { getSystemPrompt, buildUserPrompt } from './prompts';
 
@@ -6,7 +7,7 @@ const DEBUG_API = false;
 
 function debugApi(...args: unknown[]): void {
   if (DEBUG_API) {
-    console.log('[ThoughtCompletion:API]', ...args);
+    console.debug('[ThoughtCompletion:API]', ...args);
   }
 }
 
@@ -14,7 +15,7 @@ function debugApi(...args: unknown[]): void {
  * OpenAI-compatible API provider for generating suggestions
  */
 export class AIProvider {
-  private abortController: AbortController | null = null;
+  private aborted = false;
 
   constructor(private settings: ThoughtCompletionSettings) {}
 
@@ -29,18 +30,16 @@ export class AIProvider {
    * Generate a thinking suggestion based on context
    */
   async complete(context: CompletionContext): Promise<string | null> {
-    // Abort any in-flight request
-    this.abort();
+    // Reset abort flag
+    this.aborted = false;
 
     if (!this.settings.apiKey || !this.settings.apiEndpoint) {
       console.warn('Thought Completion: API key or endpoint not configured');
       return null;
     }
 
-    this.abortController = new AbortController();
-
     try {
-      const systemPrompt = getSystemPrompt(context.mode);
+      const systemPrompt = getSystemPrompt(context.mode, this.settings.customPrompts);
       const userPrompt = buildUserPrompt(
         context.prefix,
         context.suffix,
@@ -62,26 +61,31 @@ export class AIProvider {
       debugApi('Request URL:', url);
       debugApi('Request body:', JSON.stringify(requestBody, null, 2));
 
-      const response = await fetch(url, {
+      const response = await requestUrl({
+        url,
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.settings.apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-        signal: this.abortController.signal,
       });
 
-      debugApi('Response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        debugApi('Response error:', errorText);
-        console.error('Thought Completion API error:', response.status, errorText);
+      // Check if aborted during the request
+      if (this.aborted) {
+        debugApi('Request aborted');
         return null;
       }
 
-      const data = await response.json();
+      debugApi('Response status:', response.status);
+
+      if (response.status >= 400) {
+        debugApi('Response error:', response.text);
+        console.error('Thought Completion API error:', response.status, response.text);
+        return null;
+      }
+
+      const data = response.json;
       debugApi('Response data:', JSON.stringify(data, null, 2));
 
       const suggestion = data.choices?.[0]?.message?.content?.trim();
@@ -101,16 +105,13 @@ export class AIProvider {
       debugApi('Transformed suggestion:', transformed);
       return transformed;
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (this.aborted) {
         debugApi('Request aborted');
-        // Request was cancelled, this is expected
         return null;
       }
       debugApi('Request error:', error);
       console.error('Thought Completion error:', error);
       return null;
-    } finally {
-      this.abortController = null;
     }
   }
 
@@ -118,10 +119,7 @@ export class AIProvider {
    * Abort any in-flight request
    */
   abort(): void {
-    if (this.abortController) {
-      this.abortController.abort();
-      this.abortController = null;
-    }
+    this.aborted = true;
   }
 }
 

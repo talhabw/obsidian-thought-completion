@@ -11,7 +11,7 @@ const DEBUG = false;
 
 function debug(...args: unknown[]): void {
   if (DEBUG) {
-    console.log('[ThoughtCompletion]', ...args);
+    console.debug('[ThoughtCompletion]', ...args);
   }
 }
 
@@ -163,7 +163,7 @@ export class SuggestionStateMachine {
     // Go directly to predicting (no delay for manual trigger)
     this.setState('predicting');
     debug('Going directly to predicting');
-    this.predict();
+    void this.predict();
   }
 
   /**
@@ -256,7 +256,7 @@ export class SuggestionStateMachine {
       debug('Queue timer fired, current state:', this.state);
       if (this.state === 'queued') {
         this.setState('predicting');
-        this.predict();
+        void this.predict();
       }
     }, this.settings.triggerDelay);
   }

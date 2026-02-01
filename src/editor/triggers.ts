@@ -11,7 +11,7 @@ const DEBUG = false;
 
 function debug(...args: unknown[]): void {
   if (DEBUG) {
-    console.log('[ThoughtCompletion:Triggers]', ...args);
+    console.debug('[ThoughtCompletion:Triggers]', ...args);
   }
 }
 

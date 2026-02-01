@@ -31,6 +31,11 @@ export type SuggestionCase =
   | 'firstLower'; // First letter lowercase (if not acronym)
 
 /**
+ * Custom prompts per mode (empty string means use default)
+ */
+export type CustomPrompts = Partial<Record<SuggestionMode, string>>;
+
+/**
  * Plugin settings
  */
 export interface ThoughtCompletionSettings {
@@ -60,6 +65,9 @@ export interface ThoughtCompletionSettings {
   enabled: boolean;
   suggestionCase: SuggestionCase;
   showStatusBar: boolean;
+  
+  // Custom Prompts
+  customPrompts: CustomPrompts;
 }
 
 /**
@@ -81,6 +89,7 @@ export const DEFAULT_SETTINGS: ThoughtCompletionSettings = {
   enabled: true,
   suggestionCase: 'none',
   showStatusBar: false,
+  customPrompts: {},
 };
 
 /**
